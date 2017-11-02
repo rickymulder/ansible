@@ -1,0 +1,6 @@
+---
+- name: Restart sensu-client service
+  service:
+    name: sensu-client
+    state: restarted
+    enabled: yes

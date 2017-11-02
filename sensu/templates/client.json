@@ -1,0 +1,10 @@
+{
+   "client": {
+      "name": "{{ ansible_hostname }}",
+      "address": "{{ ansible_default_ipv4.address }}",
+      "environment": "{{ env_level }}",
+      "pod": "{{ pod }}",
+      "pager_team": "{{ client }}",
+      "subscriptions": {{ check_subscriptions | to_json }}
+   }
+}

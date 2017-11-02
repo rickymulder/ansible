@@ -1,0 +1,14 @@
+---
+- name: Include vars for templating
+  include_vars: ../vars/all.yml
+- name: Set config files
+  template:
+    src: "../templates/{{ item }}"
+    dest: "/etc/sensu/conf.d/{{ item }}"
+    owner: sensu
+    group: sensu
+  with_items:
+    - client.json
+    - rabbitmq.json
+  notify: Restart sensu-client service
+

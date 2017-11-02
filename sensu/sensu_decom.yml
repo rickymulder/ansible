@@ -1,0 +1,7 @@
+---
+- hosts: "{{ target }}"
+  become: True
+  become_method: sudo
+
+  roles:
+    - decom

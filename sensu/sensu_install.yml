@@ -1,0 +1,15 @@
+---
+- hosts: "{{ target }}"
+  become: True
+  become_method: sudo
+  vars:
+    - relative_hostname: "{{ ansible_hostname | regex_replace('^[a-zA-Z]{5}-[a-zA-Z]{3}-(|cl)(dev|test|stage|prod).*v$', '\\1\\2' ) | lower }}" # Required to avoid clash of roles.
+  roles:
+    - install
+    - { role: ROLE1, when: relative_hostname | search ("ROLE1") }
+    - { role: ROLE2, when: relative_hostname | search ("ROLE2") }
+    - { role: ROLE3, when: relative_hostname | search ("ROLE3") }
+    - { role: ROLE4, when: relative_hostname | search ("ROLE4") }
+    - { role: ROLE5, when: relative_hostname | search ("ROLE5") }
+    - { role: ROLE6, when: relative_hostname | search ("ROLE6") }
+    - { role: ROLE7, when: relative_hostname | search ("ROLE7") }

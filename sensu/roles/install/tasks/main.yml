@@ -1,0 +1,30 @@
+---
+- name: sensu-client - enable sensu repo
+  yum_repository:
+    name: sensu
+    description: sensu YUM repo
+    baseurl: http://sensu.global.ssl.fastly.net/yum/$basearch/
+    gpgcheck: no
+- name: sensu-client - install packages
+  yum:
+    state: latest
+    name: "{{ item }}"
+  with_items:
+     - sensu
+     - rdoc
+     - ruby
+     - libselinux-python
+  tags:
+    - skip_ansible_lint
+- name: sensu-client - create /etc/sensu/rubygems
+  file:
+    state: directory
+    path: /etc/sensu/rubygems
+- name: prestage sensu plugin directory
+  file:
+    state: directory
+    path: /opt/sensu/sensu-community-plugins/
+- name: Import Sensu plugins
+  unarchive:
+    src: ../../payload/sensu-plugins.tgz
+    dest: /opt/sensu/sensu-community-plugins/

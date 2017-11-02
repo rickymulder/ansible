@@ -1,0 +1,6 @@
+---
+- name: Stop sensu-client
+  service:
+    name: sensu-client
+    state: stopped
+    enabled: no

@@ -1,0 +1,11 @@
+---
+- name: Backup client.json
+  copy:
+    remote_src: True
+    src: /etc/sensu/conf.d/client.json
+    dest: /etc/sensu/conf.d/client.json.bak
+- name: Backup rabbitmq.json
+  copy:
+    remote_src: True
+    src: /etc/sensu/conf.d/rabbitmq.json
+    dest: /etc/sensu/conf.d/rabbitmq.json.bak
