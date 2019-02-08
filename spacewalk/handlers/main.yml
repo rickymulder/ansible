@@ -1,0 +1,6 @@
+---
+- name: Restart OSAD
+  service:
+    name: osad
+    state: restarted
+    enabled: yes

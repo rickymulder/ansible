@@ -1,15 +1,7 @@
-# All things sensu
+Ansible Playbooks/roles for Sensu and Spacewalk clients
+=========
 
-These playbooks are setup in roles which dynamically pick up two things dynamically based on ansible_hostname:
-* Environment as (cl)?(dev|test|stage|prod)
-* Client (code)
-* Additionally, the playbooks are dependant on the POD definition being up-to-date in the host manifest.
+Both roles require very slight modification for use within your environment.  Please read through them prior to running either.  Spacewalk has been designed to work for either RHEL/CentOS 6/7, but it has only been tested for RHEL6.
 
-##### Fresh Install of Sensu
-`ansible-playbook sensu_install.yml -k -K --user=MYUSER -e "target=abc-dev"`
-
-##### Update of Sensu
-`ansible-playbook sensu_update.yml -k -K --user=MYUSER -e "target=abc-dev"`
-
-##### Decom/Discontiue Sensu
-`ansible-playbook sensu_decom.yml -k -K --user=MYUSER -e "target=abc-dev"`
+--------------
+Note: The spacewalk role is meant for registering older clients (<= 2.7).  It can easily be modified to newer clients by updating the RPM locations.

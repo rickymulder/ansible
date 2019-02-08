@@ -1,0 +1,77 @@
+---
+- name: Install EPEL/Spacewalk Client repos
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+  - https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
+  - https://copr-be.cloud.fedoraproject.org/archive/spacewalk/{{ client_version }}-client/RHEL/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/spacewalk-client-repo-{{ client_version }}-0.el{{ ansible_distribution_major_version }}.noarch.rpm
+- name: Ensure repos are enabled
+  lineinfile:
+    path: "/etc/yum.repos.d/{{ item }}"
+    regexp: '^enabled'
+    line: 'enabled=1'
+  with_items:
+  - epel.repo
+  - spacewalk-client.repo
+- name: Declare Spacewalk Server
+  set_fact:
+    spacewalk_host: "{{ 'DR_HOST' if env == 'dr_string' else 'PROD_HOST' }}"
+- name: Set Spacewalk Trusted Cert
+  shell: curl -s http://{{ spacewalk_host }}/pub/ | awk 'BEGIN {FS="\""}; {print $8}' | grep rpm | sort -V | tail -n1
+  args:
+    warn: false # set warn=false to prevent warning
+  register: trusted_cert
+  tags:
+  - skip_ansible_lint
+- name: Installing Spacewalk Client tools
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - rhnlib
+    - rhn-client-tools
+    - rhn-check
+    - rhn-setup
+    - rhnsd
+    - python-hwdata
+    - yum-rhn-plugin
+    - osad
+    - m2crypto
+    - http://{{ spacewalk_host }}/pub/{{ trusted_cert.stdout }}
+- name: Look for existing registration
+  stat:
+    path: /root/.registered_to_{{ spacewalk_host }}
+  register: registration
+- name: Download Spacewalk Certificate
+  get_url:
+    url: https://{{ spacewalk_host }}/pub/RHN-ORG-TRUSTED-SSL-CERT
+    dest: /usr/share/rhn/RHN-ORG-TRUSTED-SSL-CERT
+    mode: 0644
+    owner: root
+    group: root
+    validate_certs: no # because it is self-signed
+    backup: yes
+  when: registration.stat.exists == False
+- name: Force register the system with Spacewalk
+  command: rhnreg_ks --serverUrl=https://{{ spacewalk_host }}/XMLRPC --sslCACert=/usr/share/rhn/RHN-ORG-TRUSTED-SSL-CERT --activationkey=1-rhsm --force
+  tags:
+  - skip_ansible_lint
+  when: registration.stat.exists == False
+- name: Set OSAD default certificate
+  lineinfile:
+    path: /etc/sysconfig/rhn/osad.conf
+    regexp: '^(osa_ssl_cert =)'
+    line: 'osa_ssl_cert = /usr/share/rhn/RHN-ORG-TRUSTED-SSL-CERT'
+  when: registration.stat.exists == False
+  notify: Restart OSAD
+- name: Set existing registration marker
+  file:
+    path: /root/.registered_to_{{ spacewalk_host }}
+    state: touch
+  when: registration.stat.exists == False
+- name: Disable epel # Because this comes from spacewalk now
+  lineinfile:
+    path: /etc/yum.repos.d/epel.repo
+    regexp: '^enabled'
+    line: 'enabled=0'
