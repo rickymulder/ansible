@@ -2,18 +2,24 @@
 - name: Install EPEL/Spacewalk Client repos
   yum:
     name: "{{ item }}"
-    state: installed
+    state: latest
+  retries: 3
+  delay: 3
   with_items:
+  - ca-certificates
   - https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
   - https://copr-be.cloud.fedoraproject.org/archive/spacewalk/{{ client_version }}-client/RHEL/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/spacewalk-client-repo-{{ client_version }}-0.el{{ ansible_distribution_major_version }}.noarch.rpm
 - name: Ensure repos are enabled
-  lineinfile:
-    path: "/etc/yum.repos.d/{{ item }}"
-    regexp: '^enabled'
-    line: 'enabled=1'
+  ini_file:
+    path: "/etc/yum.repos.d/{{ item }}.repo"
+    section: "{{ item }}"
+    option: enabled
+    value: 1
+    no_extra_spaces: yes
+    state: present
   with_items:
-  - epel.repo
-  - spacewalk-client.repo
+  - epel
+  - spacewalk-client
 - name: Declare Spacewalk Server
   set_fact:
     spacewalk_host: "{{ 'DR_HOST' if env == 'dr_string' else 'PROD_HOST' }}"
@@ -70,8 +76,13 @@
     path: /root/.registered_to_{{ spacewalk_host }}
     state: touch
   when: registration.stat.exists == False
-- name: Disable epel # Because this comes from spacewalk now
-  lineinfile:
-    path: /etc/yum.repos.d/epel.repo
-    regexp: '^enabled'
-    line: 'enabled=0'
+- name: Disable EPEL repo
+  ini_file:
+    path: "/etc/yum.repos.d/{{ item }}.repo"
+    section: "{{ item }}"
+    option: enabled
+    value: 0
+    no_extra_spaces: yes
+    state: present
+  with_items:
+  - epel
